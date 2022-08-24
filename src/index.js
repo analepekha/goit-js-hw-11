@@ -2,7 +2,6 @@ import './css/styles.css';
 import { throttle } from 'throttle-debounce';
 import { PixabayAPI } from './js/pixabay.API';
 import { Notify } from 'notiflix/build/notiflix-notify-aio';
-import { smoothScroll } from './js/smooth_scrolls'
 import SimpleLightbox from 'simplelightbox';
 import 'simplelightbox/dist/simple-lightbox.min.css';
 
@@ -23,7 +22,6 @@ const infiniteObserver = new IntersectionObserver(
       observer.unobserve(entry.target);
       // и загружаем новую порцию контента
       pixabayAPI.getImages();
-      renderGallery();
     }
   },
   { threshold: 0.5 }
@@ -32,32 +30,39 @@ const infiniteObserver = new IntersectionObserver(
 refs.form.addEventListener('submit', searchQuery);
 
 async function searchQuery(e) {
-    e.preventDefault();
-    refs.gallery.innerHTML = '';
-    pixabayAPI.query = refs.input.value.trim()
-    pixabayAPI.startPage();
+  e.preventDefault();
+  pixabayAPI.query = refs.input.value.trim()
+  pixabayAPI.startPage();
+  refs.gallery.innerHTML = ''
 
     try {
         if (!pixabayAPI.query) {
-            refs.gallery.innerHTML = ''
             Notify.failure('Sorry, enter the query')
-          return;
-        }
+            return;
+      };
         const response = await pixabayAPI.getImages()
 
         if (response.totalHits === 0) {
             Notify.failure('Sorry, there are no images matching your search query. Please try again.');
             return;
-        } else {
+      };
+        if (response.totalHits) {
             Notify.success(`Hooray! We found ${response.totalHits} images.`)
-            renderGallery(response.hits)
-        }
+            renderGallery(response.hits);
+
+            const { height: cardHeight } = refs.gallery.firstElementChild.getBoundingClientRect();
+                window.scrollBy({
+                  top: cardHeight * -100,
+                  behavior: 'smooth',
+                })
+            return;
+      };
     } catch (error) {
         console.log(error);
     }
 }
 
-function renderGallery(cards) {
+export function renderGallery(cards) {
   const markup =
     cards.map(({ webformatURL, largeImageURL, tags, likes, views, comments, downloads }) => {
             return `<div class="photo-card">
@@ -87,9 +92,7 @@ function renderGallery(cards) {
       if (lastCard) {
         infiniteObserver.observe(lastCard);
       }
-  
-  console.log(lastCard);
-}
+  }
 
 
 

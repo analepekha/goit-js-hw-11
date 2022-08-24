@@ -1,4 +1,6 @@
 import axios from "axios";
+import { renderGallery } from "../index";
+import { Notify } from "notiflix";
 
 export class PixabayAPI {
     BASE_URL = 'https://pixabay.com/api/';
@@ -20,11 +22,14 @@ export class PixabayAPI {
         const url = `${this.BASE_URL}?key=${this.API_KEY}&q=${this.searchQuery}&${this.searchParams}&page=${this.page}&per_page=${this.per_page}`
         try {
             const response = await axios.get(url);
+            const render = renderGallery(response.data.hits);
             console.log(response.data);
             this.page += 1;
             return response.data;
         } catch (error) {
             console.log(error.message); 
+            Notify.warning(`We're sorry, but you've reached the end of search results.`);
+            return;
         } 
     }
 
